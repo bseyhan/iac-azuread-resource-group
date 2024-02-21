@@ -11,10 +11,16 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install Dependencies
+          name: Install Azure CLI and Terraform
           command: |
+            # Install Azure CLI
             sudo apt-get update && sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
             curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+            # Install Terraform
+            sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+            sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+            sudo apt-get update && sudo apt-get install terraform
       - run:
           name: Initialize Terraform
           command: |
@@ -33,10 +39,16 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Install Dependencies
+          name: Install Azure CLI and Terraform
           command: |
+            # Repeat installation steps for Azure CLI and Terraform
             sudo apt-get update && sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
             curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+            # Install Terraform
+            sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+            sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+            sudo apt-get update && sudo apt-get install terraform
       - run:
           name: Validate Terraform Configuration
           command: |
