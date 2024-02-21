@@ -8,15 +8,10 @@ jobs:
     docker:
       - image: hashicorp/terraform:1.1.0
     working_directory: ~/project
-    parameters:
-      arm_client_id:
-        type: string
-      arm_client_secret:
-        type: string
-      arm_subscription_id:
-        type: string
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - run: cd prod && terraform init
       - run: cd prod && terraform validate
     environment:
@@ -28,13 +23,6 @@ jobs:
     docker:
       - image: hashicorp/terraform:1.1.0
     working_directory: ~/project
-    parameters:
-      arm_client_id:
-        type: string
-      arm_client_secret:
-        type: string
-      arm_subscription_id:
-        type: string
     steps:
       - checkout
       - attach_workspace:
@@ -52,13 +40,6 @@ jobs:
     docker:
       - image: hashicorp/terraform:1.1.0
     working_directory: ~/project
-    parameters:
-      arm_client_id:
-        type: string
-      arm_client_secret:
-        type: string
-      arm_subscription_id:
-        type: string
     steps:
       - checkout
       - attach_workspace:
@@ -75,17 +56,31 @@ workflows:
     jobs:
       - terraform_validate:
           context: projectx
-          arm_client_id: << parameters.arm_client_id >>
-          arm_client_secret: << parameters.arm_client_secret >>
-          arm_subscription_id: << parameters.arm_subscription_id >>
+          parameters:
+            arm_client_id:
+              description: "Azure client ID"
+              type: env_var_name
+            arm_client_secret:
+              description: "Azure client secret"
+              type: env_var_name
+            arm_subscription_id:
+              description: "Azure subscription ID"
+              type: env_var_name
           filters:
             branches:
               only: prod
       - terraform_plan:
           context: projectx
-          arm_client_id: << parameters.arm_client_id >>
-          arm_client_secret: << parameters.arm_client_secret >>
-          arm_subscription_id: << parameters.arm_subscription_id >>
+          parameters:
+            arm_client_id:
+              description: "Azure client ID"
+              type: env_var_name
+            arm_client_secret:
+              description: "Azure client secret"
+              type: env_var_name
+            arm_subscription_id:
+              description: "Azure subscription ID"
+              type: env_var_name
           requires:
             - terraform_validate
           filters:
@@ -93,9 +88,16 @@ workflows:
               only: prod
       - terraform_apply:
           context: projectx
-          arm_client_id: << parameters.arm_client_id >>
-          arm_client_secret: << parameters.arm_client_secret >>
-          arm_subscription_id: << parameters.arm_subscription_id >>
+          parameters:
+            arm_client_id:
+              description: "Azure client ID"
+              type: env_var_name
+            arm_client_secret:
+              description: "Azure client secret"
+              type: env_var_name
+            arm_subscription_id:
+              description: "Azure subscription ID"
+              type: env_var_name
           requires:
             - terraform_plan
           filters:
