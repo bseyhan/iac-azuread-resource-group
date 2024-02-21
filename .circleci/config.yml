@@ -4,51 +4,22 @@ orbs:
   terraform: circleci/terraform@3.1
 
 jobs:
-  terraform_init:
+  terraform_init_and_validate:
     docker:
-      - image: cimg/base:stable
+      - image: hashicorp/terraform:1.1.0  # Use an image with Terraform pre-installed
+    environment:
+      ARM_CLIENT_ID: ${ARM_CLIENT_ID}
+      ARM_CLIENT_SECRET: ${ARM_CLIENT_SECRET}
+      ARM_TENANT_ID: ${ARM_TENANT_ID}
+      ARM_SUBSCRIPTION_ID: ${ARM_SUBSCRIPTION_ID}
     working_directory: ~/project
     steps:
       - checkout
-      - run:
-          name: Install Azure CLI and Terraform
-          command: |
-            # Install Azure CLI
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
-            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-            # Install Terraform
-            sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
-            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-            sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-            sudo apt-get update && sudo apt-get install terraform
       - run:
           name: Initialize Terraform
           command: |
             cd prod
             terraform init
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - prod
-
-  terraform_validate:
-    docker:
-      - image: cimg/base:stable
-    working_directory: ~/project
-    steps:
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Install Azure CLI and Terraform
-          command: |
-            # Repeat installation steps for Azure CLI and Terraform
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
-            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-            # Install Terraform
-            sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
-            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-            sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-            sudo apt-get update && sudo apt-get install terraform
       - run:
           name: Validate Terraform Configuration
           command: |
@@ -59,10 +30,7 @@ workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform_init
-      - terraform_validate:
-          requires:
-            - terraform_init
+      - terraform_init_and_validate:
           filters:
             branches:
               only: prod
