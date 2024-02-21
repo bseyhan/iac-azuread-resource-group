@@ -12,6 +12,10 @@ jobs:
       - checkout
       - run: cd prod && terraform init
       - run: cd prod && terraform validate
+    environment:
+      ARM_CLIENT_ID: << parameters.arm_client_id >>
+      ARM_CLIENT_SECRET: << parameters.arm_client_secret >>
+      ARM_SUBSCRIPTION_ID: << parameters.arm_subscription_id >>
 
   terraform_plan:
     docker:
@@ -19,10 +23,16 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - run:
           name: Terraform Init
           command: cd prod && terraform init -reconfigure
       - run: cd prod && terraform plan -out=tfplan
+    environment:
+      ARM_CLIENT_ID: << parameters.arm_client_id >>
+      ARM_CLIENT_SECRET: << parameters.arm_client_secret >>
+      ARM_SUBSCRIPTION_ID: << parameters.arm_subscription_id >>
 
   terraform_apply:
     docker:
@@ -30,7 +40,13 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - run: cd prod && terraform apply -auto-approve tfplan
+    environment:
+      ARM_CLIENT_ID: << parameters.arm_client_id >>
+      ARM_CLIENT_SECRET: << parameters.arm_client_secret >>
+      ARM_SUBSCRIPTION_ID: << parameters.arm_subscription_id >>
 
 workflows:
   version: 2
