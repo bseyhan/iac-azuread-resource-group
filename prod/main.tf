@@ -18,10 +18,10 @@ terraform {
     }
   }
   backend "azurerm" {
-    resource_group_name  = "iac-azuread-conditional-access-prod-tfstate-rg"
-    storage_account_name = "tfstateprojectx01"
-    container_name       = "terraformstate"
-    key                  = "prod-terraform.tfstate"
+esource_group_name  = "tf-ProjectX-tfState-RG"
+    storage_account_name = "projectxtfstatesa"
+    container_name       = "projectxtfstatecn"
+    key                  = "projectx.tfstate"
   }
 }
 
