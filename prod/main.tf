@@ -18,7 +18,7 @@ terraform {
     }
   }
   backend "azurerm" {
-esource_group_name  = "tf-ProjectX-tfState-RG"
+    resource_group_name  = "tf-ProjectX-tfState-RG"
     storage_account_name = "projectxtfstatesa"
     container_name       = "projectxtfstatecn"
     key                  = "projectx.tfstate"
