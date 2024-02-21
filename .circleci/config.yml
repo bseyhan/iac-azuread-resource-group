@@ -19,6 +19,9 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
+      - run:
+          name: Terraform Init
+          command: cd prod && terraform init -reconfigure
       - run: cd prod && terraform plan -out=tfplan
 
   terraform_apply:
