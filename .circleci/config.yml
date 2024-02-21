@@ -1,25 +1,52 @@
----
-# https://circleci.com/developer/orbs/orb/circleci/terraform
 version: 2.1
-orbs: 
+
+orbs:
   terraform: circleci/terraform@3.1.0
+
+jobs:
+  # Define individual jobs for each Terraform step
+  terraform_validate:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run: cd prod && terraform init
+      - run: cd prod && terraform validate
+    context: projectx
+
+  terraform_plan:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run: cd prod && terraform plan -out=tfplan
+    context: projectx
+
+  terraform_apply:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run: cd prod && terraform apply -auto-approve tfplan
+    context: projectx
+
 workflows:
+  version: 2
   deploy_infrastructure:
     jobs:
-      - terraform/validate:
-          checkout: true
+      - terraform_validate:
           context: projectx
-      - terraform/plan:
-          checkout: true
+      - terraform_plan:
           context: projectx
-          persist-workspace: true
           requires:
-            - terraform/validate     
-      - terraform/apply:
-          attach-workspace: true
+            - terraform_validate
+      - terraform_apply:
           context: projectx
+          requires:
+            - terraform_plan
           filters:
             branches:
               only: prod
-          requires:
-            - terraform/plan
