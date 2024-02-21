@@ -4,7 +4,6 @@ orbs:
   terraform: circleci/terraform@3.1.0
 
 jobs:
-  # Define individual jobs for each Terraform step
   terraform_validate:
     docker:
       - image: hashicorp/terraform:1.1.0
@@ -13,7 +12,6 @@ jobs:
       - checkout
       - run: cd prod && terraform init
       - run: cd prod && terraform validate
-    context: projectx
 
   terraform_plan:
     docker:
@@ -22,7 +20,6 @@ jobs:
     steps:
       - checkout
       - run: cd prod && terraform plan -out=tfplan
-    context: projectx
 
   terraform_apply:
     docker:
@@ -31,7 +28,6 @@ jobs:
     steps:
       - checkout
       - run: cd prod && terraform apply -auto-approve tfplan
-    context: projectx
 
 workflows:
   version: 2
@@ -39,10 +35,16 @@ workflows:
     jobs:
       - terraform_validate:
           context: projectx
+          filters:
+            branches:
+              only: prod
       - terraform_plan:
           context: projectx
           requires:
             - terraform_validate
+          filters:
+            branches:
+              only: prod
       - terraform_apply:
           context: projectx
           requires:
