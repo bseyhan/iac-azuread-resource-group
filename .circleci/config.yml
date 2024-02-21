@@ -4,50 +4,43 @@ orbs:
   terraform: circleci/terraform@3.1
 
 jobs:
-  terraform_workflow:
+  terraform_init:
     docker:
       - image: hashicorp/terraform:latest
-    environment:
-      TF_ROOT: ~/project/prod
+    working_directory: ~/project
     steps:
       - checkout
       - run: 
-          name: "Set Terraform Working Directory"
+          name: Initialize Terraform
           command: |
-            echo 'export TF_WORKING_DIR=$TF_ROOT' >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Terraform Init
-          command: |
-            cd $TF_WORKING_DIR
+            cd prod
             terraform init
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - prod
+
+  terraform_validate:
+    docker:
+      - image: hashicorp/terraform:latest
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/project
       - run:
-          name: Terraform Format
+          name: Validate Terraform Configuration
           command: |
-            cd $TF_WORKING_DIR
-            terraform fmt -check
-      - run:
-          name: Terraform Validate
-          command: |
-            cd $TF_WORKING_DIR
+            cd prod
             terraform validate
-      - run:
-          name: Terraform Plan
-          command: |
-            cd $TF_WORKING_DIR
-            terraform plan
-      - run:
-          name: Terraform Apply
-          command: |
-            cd $TF_WORKING_DIR
-            terraform apply -auto-approve
-          no_output_timeout: 30m
 
 workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform_workflow:
+      - terraform_init
+      - terraform_validate:
+          requires:
+            - terraform_init
           filters:
             branches:
               only: prod
