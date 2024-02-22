@@ -1,0 +1,19 @@
+Basic Structure of Your Terraform Project
+
+    resource-group Folder: Contains Terraform code to create an Azure Resource Group.
+        main.tf: Where you define the Resource Group you want to create.
+        outputs.tf: Outputs details like the Resource Group's name and ID.
+        variables.tf: Lists variables (like name and location) that you can change.
+
+    prod Folder: This is where you specify the production environment's settings using the resource-group module.
+        main.tf: Uses the resource-group module to create resources.
+        outputs.tf: Shows outputs based on what's created in prod.
+        terraform.tfvars: Sets values for variables (like Resource Group's name).
+        variables.tf: Defines variables for the production environment.
+
+Key Concepts
+
+    Modules (resource-group): Reusable pieces of Terraform code for creating specific resources. Think of it as a template.
+    Environment (prod): Your setup for a specific purpose, like production. You can have different settings for different environments (e.g., development, testing).
+    Variables: Let you customize Terraform modules with different values, like changing the Resource Group name.
+    Outputs: Information Terraform provides after creating resources, such as the Resource Group's name and ID.
