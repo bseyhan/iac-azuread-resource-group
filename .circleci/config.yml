@@ -39,4 +39,4 @@ workflows:
       - terraform_init_validate_plan_apply:
           filters:
             branches:
-              only: master
+              only: prod
