@@ -3,79 +3,35 @@ version: 2.1
 orbs:
   terraform: circleci/terraform@3.1.0
 
-jobs:
-  # Assuming you have a job to validate your Terraform configurations
-  terraform_validate:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run: 
-          name: Terraform Init
-          command: |
-            cd prod
-            terraform init
-      - run: 
-          name: Terraform Validate
-          command: |
-            cd prod
-            terraform validate
-    context: projectx
-
-  # Job to plan Terraform deployment
-  terraform_plan:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: Terraform Plan
-          command: |
-            cd prod
-            terraform plan \
-              -var "ARM_CLIENT_ID=${ARM_CLIENT_ID}" \
-              -var "ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}" \
-              -var "ARM_TENANT_ID=${ARM_TENANT_ID}" \
-              -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}" \
-              -out=tfplan
-    context: projectx
-
-  # Job to apply Terraform deployment
-  terraform_apply:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: Terraform Apply
-          command: |
-            cd prod
-            terraform apply -auto-approve tfplan
-    context: projectx
-    filters:
-      branches:
-        only: prod  # Ensure this matches your intended deployment branch
-
 workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform_validate:
+      - terraform/validate:
+          checkout: true
+          context: projectx  # Apply context at the job invocation within the workflow
+          name: validate_terraform
           filters:
             branches:
-              only: prod
-      - terraform_plan:
+              only: master  # Ensure this matches your intended deployment branch
+
+      - terraform/plan:
+          checkout: true
+          context: projectx  # Apply context here as well
+          name: plan_terraform
           requires:
-            - terraform_validate
+            - validate_terraform
           filters:
             branches:
-              only: prod
-      - terraform_apply:
+              only: master
+          persist-workspace: true  # persist-workspace is used to pass data between jobs
+
+      - terraform/apply:
+          attach-workspace: true  # attach-workspace to use data persisted in the previous job
+          context: projectx  # And apply context here
+          name: apply_terraform
           requires:
-            - terraform_plan
+            - plan_terraform
           filters:
             branches:
-              only: prod
+              only: master
