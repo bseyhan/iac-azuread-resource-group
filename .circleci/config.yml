@@ -18,9 +18,9 @@ jobs:
               -var "ARM_TENANT_ID=${ARM_TENANT_ID}" \
               -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}"
       - persist_to_workspace:
-          root: ~/project/prod
+          root: ~/project
           paths:
-            - tfplan
+            - prod  # Persist the entire 'prod' directory
 
   terraform_apply:
     docker:
@@ -29,7 +29,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ~/project/prod
+          at: ~/project
       - run:
           name: Apply Terraform Plan
           command: |
