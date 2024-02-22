@@ -4,72 +4,57 @@ orbs:
   terraform: circleci/terraform@3.1.0
 
 jobs:
-  terraform_validate:
+  setup_azure_credentials:
     docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
+      - image: cimg/base:stable
     steps:
-      - checkout
-      - run: cd prod && terraform init
-      - run: cd prod && terraform validate
-
-  terraform_plan:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
       - run:
-          name: Setup Azure Credentials
+          name: Export Azure Credentials
           command: |
             echo 'export ARM_CLIENT_ID=${ARM_CLIENT_ID}' >> $BASH_ENV
             echo 'export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}' >> $BASH_ENV
             echo 'export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}' >> $BASH_ENV
             echo 'export ARM_TENANT_ID=${ARM_TENANT_ID}' >> $BASH_ENV
-            source $BASH_ENV
+    context: projectx
+
+  terraform_init_validate_plan_apply:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
       - run:
-          name: Terraform Init and Plan
+          name: Initialize Terraform
           command: |
             cd prod
-            terraform init -reconfigure
-            terraform plan -out=tfplan
-
-  terraform_apply:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
+            terraform init
       - run:
-          name: Setup Azure Credentials
+          name: Validate Terraform Configuration
           command: |
-            echo 'export ARM_CLIENT_ID=${ARM_CLIENT_ID}' >> $BASH_ENV
-            echo 'export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}' >> $BASH_ENV
-            echo 'export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}' >> $BASH_ENV
-            echo 'export ARM_TENANT_ID=${ARM_TENANT_ID}' >> $BASH_ENV
-            source $BASH_ENV
-      - run: cd prod && terraform apply -auto-approve tfplan
+            cd prod
+            terraform validate
+      - run:
+          name: Terraform Plan
+          command: |
+            cd prod
+            terraform plan -out=tfplan
+      - run:
+          name: Terraform Apply
+          command: |
+            cd prod
+            terraform apply -auto-approve tfplan
+    context: projectx
 
 workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform_validate:
-          context: projectx
-          filters:
-            branches:
-              only: prod
-      - terraform_plan:
-          context: projectx
+      - setup_azure_credentials
+      - terraform_init_validate_plan_apply:
           requires:
-            - terraform_validate
-          filters:
-            branches:
-              only: prod
-      - terraform_apply:
-          context: projectx
-          requires:
-            - terraform_plan
+            - setup_azure_credentials
           filters:
             branches:
               only: prod
