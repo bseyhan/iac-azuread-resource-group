@@ -10,13 +10,3 @@ variable "location" {
   type        = string
 }
 
-variable "storage_account_name" {
-  description = "The name of the Azure Storage Account"
-  type        = string
-}
-
-variable "account_replication_type" {
-  description = "The replication type of the Azure Storage Account"
-  type        = string
-  default     = "LRS"
-}
