@@ -1,51 +1,30 @@
 version: 2.1
 
-orbs:
-  terraform: circleci/terraform@3.1.0
-
 jobs:
-  terraform_custom_workflow:
+  terraform_workflow:
     docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
+      - image: hashicorp/terraform:latest
+    working_directory: ~/project  # Assuming the root of your checked-out repo is ~/project
     steps:
       - checkout
       - run:
-          name: Setup Environment Variables
+          name: Initialize Terraform
           command: |
-            echo "Exporting environment variables..."
-            echo 'export ARM_CLIENT_ID=$ARM_CLIENT_ID' >> $BASH_ENV
-            echo 'export ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET' >> $BASH_ENV
-            echo 'export ARM_TENANT_ID=$ARM_TENANT_ID' >> $BASH_ENV
-            echo 'export ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID' >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Change Directory and Initialize Terraform
-          command: |
-            cd prod
+            cd prod  # Navigate into the 'prod' directory where your Terraform files are
             terraform init
       - run:
-          name: Validate Terraform Configuration
+          name: Apply Terraform Configuration
           command: |
-            cd prod
-            terraform validate
-      - run:
-          name: Create Terraform Plan
-          command: |
-            cd prod
-            terraform plan -out=tfplan
-      - run:
-          name: Apply Terraform Plan
-          command: |
-            cd prod
-            terraform apply -auto-approve tfplan
+            cd prod  # Ensure we're still in the 'prod' directory
+            terraform apply -auto-approve \
+              -var "ARM_CLIENT_ID=${ARM_CLIENT_ID}" \
+              -var "ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}" \
+              -var "ARM_TENANT_ID=${ARM_TENANT_ID}" \
+              -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}"
 
 workflows:
   version: 2
-  deploy_infrastructure:
+  deploy:
     jobs:
-      - terraform_custom_workflow:
-          context: projectx
-          filters:
-            branches:
-              only: prod
+      - terraform_workflow:
+          context: projectx  # Ensure this context contains your Azure credentials
