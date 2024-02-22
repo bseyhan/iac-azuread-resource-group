@@ -4,14 +4,23 @@ orbs:
   terraform: circleci/terraform@3.1.0
 
 jobs:
-  terraform_init_validate_plan_apply:
+  terraform_custom_workflow:
     docker:
       - image: hashicorp/terraform:1.1.0
     working_directory: ~/project
     steps:
       - checkout
       - run:
-          name: Change to Terraform Directory and Initialize
+          name: Setup Environment Variables
+          command: |
+            echo "Exporting environment variables..."
+            echo 'export ARM_CLIENT_ID=$ARM_CLIENT_ID' >> $BASH_ENV
+            echo 'export ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET' >> $BASH_ENV
+            echo 'export ARM_TENANT_ID=$ARM_TENANT_ID' >> $BASH_ENV
+            echo 'export ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Change Directory and Initialize Terraform
           command: |
             cd prod
             terraform init
@@ -30,13 +39,13 @@ jobs:
           command: |
             cd prod
             terraform apply -auto-approve tfplan
-    context: projectx
 
 workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform_init_validate_plan_apply:
+      - terraform_custom_workflow:
+          context: projectx
           filters:
             branches:
               only: prod
