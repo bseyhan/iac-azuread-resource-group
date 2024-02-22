@@ -20,9 +20,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Terraform Init
-          command: cd prod && terraform init -reconfigure
-      - run: cd prod && terraform plan -out=tfplan
+          name: Setup Azure Credentials
+          command: |
+            echo 'export ARM_CLIENT_ID=${ARM_CLIENT_ID}' >> $BASH_ENV
+            echo 'export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}' >> $BASH_ENV
+            echo 'export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}' >> $BASH_ENV
+            echo 'export ARM_TENANT_ID=${ARM_TENANT_ID}' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Terraform Init and Plan
+          command: |
+            cd prod
+            terraform init -reconfigure
+            terraform plan -out=tfplan
 
   terraform_apply:
     docker:
@@ -30,6 +40,14 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
+      - run:
+          name: Setup Azure Credentials
+          command: |
+            echo 'export ARM_CLIENT_ID=${ARM_CLIENT_ID}' >> $BASH_ENV
+            echo 'export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}' >> $BASH_ENV
+            echo 'export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}' >> $BASH_ENV
+            echo 'export ARM_TENANT_ID=${ARM_TENANT_ID}' >> $BASH_ENV
+            source $BASH_ENV
       - run: cd prod && terraform apply -auto-approve tfplan
 
 workflows:
