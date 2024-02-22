@@ -9,11 +9,6 @@ output "resource_group_id" {
 }
 
 output "storage_account_name" {
-  value       = azurerm_storage_account.cloud_uploader_sa.name
+  value       = azurerm_storage_account.clouduploader_sa_tf.name
   description = "The name of the storage account"
-}
-
-output "storage_account_id" {
-  value       = azurerm_storage_account.cloud_uploader_sa.id
-  description = "The ID of the storage account"
 }
