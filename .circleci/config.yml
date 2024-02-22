@@ -13,7 +13,7 @@ workflows:
           name: validate_terraform
           filters:
             branches:
-              only: master  # Ensure this matches your intended deployment branch
+              only: prod  # Ensure this matches your intended deployment branch
 
       - terraform/plan:
           checkout: true
@@ -23,7 +23,7 @@ workflows:
             - validate_terraform
           filters:
             branches:
-              only: master
+              only: prod
           persist-workspace: true  # persist-workspace is used to pass data between jobs
 
       - terraform/apply:
@@ -34,4 +34,4 @@ workflows:
             - plan_terraform
           filters:
             branches:
-              only: master
+              only: prod
