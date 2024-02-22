@@ -1,30 +1,59 @@
 version: 2.1
 
 jobs:
-  terraform_workflow:
+  validate_terraform:
     docker:
       - image: hashicorp/terraform:latest
-    working_directory: ~/project  # Assuming the root of your checked-out repo is ~/project
+    working_directory: ~/project
     steps:
       - checkout
       - run:
-          name: Initialize Terraform
+          name: Validate Terraform Configuration
           command: |
-            cd prod  # Navigate into the 'prod' directory where your Terraform files are
+            cd prod
             terraform init
+            terraform validate
+
+  plan_terraform:
+    docker:
+      - image: hashicorp/terraform:latest
+    working_directory: ~/project
+    steps:
+      - checkout
       - run:
-          name: Apply Terraform Configuration
+          name: Create Terraform Plan
           command: |
-            cd prod  # Ensure we're still in the 'prod' directory
-            terraform apply -auto-approve \
+            cd prod
+            terraform plan \
               -var "ARM_CLIENT_ID=${ARM_CLIENT_ID}" \
               -var "ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}" \
               -var "ARM_TENANT_ID=${ARM_TENANT_ID}" \
-              -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}"
+              -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}" \
+              -out=tfplan
+
+  apply_terraform:
+    docker:
+      - image: hashicorp/terraform:latest
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Apply Terraform Plan
+          command: |
+            cd prod
+            terraform apply -auto-approve tfplan
 
 workflows:
   version: 2
   deploy:
     jobs:
-      - terraform_workflow:
-          context: projectx  # Ensure this context contains your Azure credentials
+      - validate_terraform:
+          context: projectx
+      - plan_terraform:
+          context: projectx
+          requires:
+            - validate_terraform
+      - apply_terraform:
+          context: projectx
+          requires:
+            - plan_terraform
