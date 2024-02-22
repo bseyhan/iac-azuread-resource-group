@@ -13,7 +13,7 @@ workflows:
           name: validate_terraform
           filters:
             branches:
-              only: master  # Ensure this matches your intended deployment branch
+              only: prod  # Ensure this matches your intended deployment branch
 
       - terraform/plan:
           checkout: true
@@ -23,15 +23,15 @@ workflows:
             - validate_terraform
           filters:
             branches:
-              only: master
+              only: prod
           persist-workspace: true  # persist-workspace is used to pass data between jobs
 
       - terraform/apply:
           attach-workspace: true  # attach-workspace to use data persisted in the previous job
-          context: projectx  # And apply context here
+          context: projectx  # And apply context herea
           name: apply_terraform
           requires:
             - plan_terraform
           filters:
             branches:
-              only: master
+              only: prod
