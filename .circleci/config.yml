@@ -3,73 +3,35 @@ version: 2.1
 orbs:
   terraform: circleci/terraform@3.1.0
 
-jobs:
-  terraform_validate:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run: cd prod && terraform init
-      - run: cd prod && terraform validate
-
-  terraform_plan:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: Setup Azure Credentials
-          command: |
-            echo 'export ARM_CLIENT_ID=${ARM_CLIENT_ID}' >> $BASH_ENV
-            echo 'export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}' >> $BASH_ENV
-            echo 'export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}' >> $BASH_ENV
-            echo 'export ARM_TENANT_ID=${ARM_TENANT_ID}' >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Terraform Init and Plan
-          command: |
-            cd prod
-            terraform init -reconfigure
-            terraform plan -out=tfplan
-
-  terraform_apply:
-    docker:
-      - image: hashicorp/terraform:1.1.0
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: Setup Azure Credentials
-          command: |
-            echo 'export ARM_CLIENT_ID=${ARM_CLIENT_ID}' >> $BASH_ENV
-            echo 'export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}' >> $BASH_ENV
-            echo 'export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}' >> $BASH_ENV
-            echo 'export ARM_TENANT_ID=${ARM_TENANT_ID}' >> $BASH_ENV
-            source $BASH_ENV
-      - run: cd prod && terraform apply -auto-approve tfplan
-
 workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform_validate:
-          context: projectx
+      - terraform/validate:
+          checkout: true
+          context: projectx  # Apply context at the job invocation within the workflow
+          name: validate_terraform
           filters:
             branches:
-              only: prod
-      - terraform_plan:
-          context: projectx
+              only: master  # Ensure this matches your intended deployment branch
+
+      - terraform/plan:
+          checkout: true
+          context: projectx  # Apply context here as well
+          name: plan_terraform
           requires:
-            - terraform_validate
+            - validate_terraform
           filters:
             branches:
-              only: prod
-      - terraform_apply:
-          context: projectx
+              only: master
+          persist-workspace: true  # persist-workspace is used to pass data between jobs
+
+      - terraform/apply:
+          attach-workspace: true  # attach-workspace to use data persisted in the previous job
+          context: projectx  # And apply context here
+          name: apply_terraform
           requires:
-            - terraform_plan
+            - plan_terraform
           filters:
             branches:
-              only: prod
+              only: master
