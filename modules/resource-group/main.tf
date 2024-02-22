@@ -1,4 +1,4 @@
-resource "azurerm_resource_group" "terraform_rgv2" {
-  name     = "TerraformRGv2"
+resource "azurerm_resource_group" "cloud_uploader" {
+  name     = "CloudUploader"
   location = "West Europe"
 }
