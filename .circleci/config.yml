@@ -3,27 +3,79 @@ version: 2.1
 orbs:
   terraform: circleci/terraform@3.1.0
 
+jobs:
+  # Assuming you have a job to validate your Terraform configurations
+  terraform_validate:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run: 
+          name: Terraform Init
+          command: |
+            cd prod
+            terraform init
+      - run: 
+          name: Terraform Validate
+          command: |
+            cd prod
+            terraform validate
+    context: projectx
+
+  # Job to plan Terraform deployment
+  terraform_plan:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Terraform Plan
+          command: |
+            cd prod
+            terraform plan \
+              -var "ARM_CLIENT_ID=${ARM_CLIENT_ID}" \
+              -var "ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}" \
+              -var "ARM_TENANT_ID=${ARM_TENANT_ID}" \
+              -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}" \
+              -out=tfplan
+    context: projectx
+
+  # Job to apply Terraform deployment
+  terraform_apply:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Terraform Apply
+          command: |
+            cd prod
+            terraform apply -auto-approve tfplan
+    context: projectx
+    filters:
+      branches:
+        only: prod  # Ensure this matches your intended deployment branch
+
 workflows:
+  version: 2
   deploy_infrastructure:
     jobs:
-      - terraform/validate:
-          checkout: true
-          context: projectx  # Updated context to "projectx"
-          path: "prod"  # This is illustrative; "path" parameter is not used by the Terraform orb
-      - terraform/plan:
-          checkout: true
-          context: projectx  # Updated context to "projectx"
-          persist-workspace: true
-          requires:
-            - terraform/validate
-          path: "prod"  # This is illustrative; adjust your commands as needed if your Terraform files are in a subdirectory
-      - terraform/apply:
-          attach-workspace: true
-          context: projectx  # Updated context to "projectx"
+      - terraform_validate:
           filters:
             branches:
-              only: prod  # Ensure this matches your intended deployment branch
+              only: prod
+      - terraform_plan:
           requires:
-            - terraform/plan
-          path: "prod"  # This is illustrative; adjust according to your directory structure
-
+            - terraform_validate
+          filters:
+            branches:
+              only: prod
+      - terraform_apply:
+          requires:
+            - terraform_plan
+          filters:
+            branches:
+              only: prod
