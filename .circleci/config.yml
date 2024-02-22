@@ -3,35 +3,40 @@ version: 2.1
 orbs:
   terraform: circleci/terraform@3.1.0
 
+jobs:
+  terraform_init_validate_plan_apply:
+    docker:
+      - image: hashicorp/terraform:1.1.0
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Change to Terraform Directory and Initialize
+          command: |
+            cd prod
+            terraform init
+      - run:
+          name: Validate Terraform Configuration
+          command: |
+            cd prod
+            terraform validate
+      - run:
+          name: Create Terraform Plan
+          command: |
+            cd prod
+            terraform plan -out=tfplan
+      - run:
+          name: Apply Terraform Plan
+          command: |
+            cd prod
+            terraform apply -auto-approve tfplan
+    context: projectx
+
 workflows:
   version: 2
   deploy_infrastructure:
     jobs:
-      - terraform/validate:
-          checkout: true
-          context: projectx  # Apply context at the job invocation within the workflow
-          name: validate_terraform
+      - terraform_init_validate_plan_apply:
           filters:
             branches:
-              only: prod  # Ensure this matches your intended deployment branch
-
-      - terraform/plan:
-          checkout: true
-          context: projectx  # Apply context here as well
-          name: plan_terraform
-          requires:
-            - validate_terraform
-          filters:
-            branches:
-              only: prod
-          persist-workspace: true  # persist-workspace is used to pass data between jobs
-
-      - terraform/apply:
-          attach-workspace: true  # attach-workspace to use data persisted in the previous job
-          context: projectx  # And apply context herea
-          name: apply_terraform
-          requires:
-            - plan_terraform
-          filters:
-            branches:
-              only: prod
+              only: master
