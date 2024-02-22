@@ -4,8 +4,6 @@ module "resource_group" {
   location = var.location
 }
 
-
-
 terraform {
   required_providers {
     azuread = {
