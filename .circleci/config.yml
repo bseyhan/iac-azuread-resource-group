@@ -28,7 +28,7 @@ workflows:
 
       - terraform/apply:
           attach-workspace: true  # attach-workspace to use data persisted in the previous job
-          context: projectx  # And apply context here
+          context: projectx  # And apply context herea
           name: apply_terraform
           requires:
             - plan_terraform
