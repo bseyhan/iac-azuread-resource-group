@@ -17,6 +17,10 @@ jobs:
               -var "ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET}" \
               -var "ARM_TENANT_ID=${ARM_TENANT_ID}" \
               -var "ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID}"
+      - persist_to_workspace:
+          root: ~/project/prod
+          paths:
+            - tfplan
 
   terraform_apply:
     docker:
@@ -24,6 +28,8 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project/prod
       - run:
           name: Apply Terraform Plan
           command: |
